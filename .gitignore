@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+*_demo
+
+# SConstruct
+*.sconsign.dblite
+
+# swap file
+*.swp
