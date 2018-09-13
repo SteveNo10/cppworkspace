@@ -10,6 +10,9 @@
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
+#include <map>
+
+using namespace std;
 
 void PrintCode(FILE* pFile)
 {
@@ -45,11 +48,22 @@ int main(int, char**)
         return -1;
     }
 
-    PrintCode(pFile); printf("%d\n", 12);
-    PrintCode(pFile); printf("%d\n", -12);
-    PrintCode(pFile); printf("%i\n", 12);
-    PrintCode(pFile); printf("%i\n", -12);
+    PrintCode(pFile); printf("%d %i\n", (int)12, (int)12);
+    PrintCode(pFile); printf("%hhd\n", (char)'A');
+    PrintCode(pFile); printf("%hd\n", (short)12);
+    PrintCode(pFile); printf("%ld\n", (long)12);
+    PrintCode(pFile); printf("%lld\n", (long long)12);
+    PrintCode(pFile); printf("%jd\n", (intmax_t)12);
+    PrintCode(pFile); printf("%zd\n", (size_t)12);
+    PrintCode(pFile); printf("%td\n", (ptrdiff_t)12l);
 
+    PrintCode(pFile); printf("%o %u %x %X\n", 123, 123, 123, 123);
+    PrintCode(pFile); printf("%hho %hhu %hhx %hhX\n", 'A', 'A', 'A', 'A');
+    PrintCode(pFile); printf("%ho %hu %hx %hX\n", (unsigned)123, (uint16_t)123, (uint16_t)123, (uint16_t)123);
+    PrintCode(pFile); printf("%lo %lu %lx %lX\n", (unsigned long)123, (long)123, (long)123, (long)123);
+    PrintCode(pFile); printf("%u\n", 12);
+    PrintCode(pFile); printf("%x\n", 12);
+    PrintCode(pFile); printf("%X\n", 12);
     PrintCode(pFile); printf("%o\n", 12);
     PrintCode(pFile); printf("%u\n", 12);
     PrintCode(pFile); printf("%x\n", 12);
