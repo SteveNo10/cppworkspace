@@ -1,0 +1,5 @@
+env = Environment()
+env.Program('fork_demo', 'forkdemo.cpp')
+env.Program('vfork_demo', 'vforkdemo.cpp')
+env.Program('zombie_demo', 'zombiedemo.cpp')
+env.Program('orphan_demo', 'orphandemo.cpp')
