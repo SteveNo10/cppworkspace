@@ -1,0 +1,2 @@
+env = Environment()
+env.Program('signal_demo', 'signaldemo.cpp')
