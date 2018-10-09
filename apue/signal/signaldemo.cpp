@@ -52,6 +52,10 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <time.h>
 
 void f_sighandle(int signo)
 {
@@ -61,56 +65,88 @@ void f_sighandle(int signo)
 
 void f_sigachandle(int signo)
 {
-    printf("sigaction receive signo:%d\n", signo);
-    sleep(5);
+    printf("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx sigaction receive signo:%d\n", signo);
+    // sleep(5);
+}
+
+void f_siglog(int signo)
+{
+    int fd = open("./signal.log", O_CREAT|O_RDWR|O_TRUNC, 0664);
+    if(-1 == fd)
+    {
+        perror("open err");
+        return;
+    }
+
+    char buf[BUFSIZ] = {0};
+    time_t now = time(NULL);
+    char timebuf[BUFSIZ] = {0};
+    ctime_r(&now, timebuf);
+    int size = snprintf(buf, BUFSIZ, "%s get sig:%d\n", timebuf, signo);
+    write(fd, buf, size);
+    close(fd);
 }
 
 int main(int, char**)
 {
+    struct sigaction act_log;
+    act_log.sa_handler = f_siglog;
+    sigemptyset(&act_log.sa_mask);
+    act_log.sa_flags = 0;
+    sigaction(SIGHUP, &act_log, NULL);
+    printf("close this session will write to signal.log, but here raise(SIGHUP)\n");
+    raise(SIGHUP);
+
     struct sigaction act;
     act.sa_handler = f_sigachandle;
     sigemptyset(&act.sa_mask);
-    // sigaddset(&act.sa_mask, SIGQUIT);
+    sigaddset(&act.sa_mask, SIGQUIT);
+    sigaddset(&act.sa_mask, SIGINT);
+    sigaddset(&act.sa_mask, SIGABRT);
     act.sa_flags = 0;
+
     sigaction(SIGINT, &act, NULL);
+    printf("input Ctrl+C\n");
+    pause();
 
 /*     signal(SIGINT, f_sighandle); */
 
-    // struct sigaction act;
-    // act.sa_handler = f_sigachandle;
-    // sigemptyset(&act.sa_mask);
-    // sigaddset(&act.sa_mask, SIGHUP);
-    // // sigaddset(&act.sa_mask, SIGINT);
-    // sigaddset(&act.sa_mask, SIGQUIT);
-    // sigaddset(&act.sa_mask, SIGILL);
-    // sigaddset(&act.sa_mask, SIGTRAP);
-    // sigaddset(&act.sa_mask, SIGABRT);
-    // sigaddset(&act.sa_mask, SIGBUS);
-    // sigaddset(&act.sa_mask, SIGFPE);
-    // // sigaddset(&act.sa_mask, SIGKILL);
-    // sigaddset(&act.sa_mask, SIGUSR1);
-    // sigaddset(&act.sa_mask, SIGSEGV);
-    // sigaddset(&act.sa_mask, SIGUSR2);
-    // sigaddset(&act.sa_mask, SIGPIPE);
-    // sigaddset(&act.sa_mask, SIGALRM);
-    // sigaddset(&act.sa_mask, SIGTERM);
-    // // sigaddset(&act.sa_mask, SIGSTKFLT);
-    // sigaddset(&act.sa_mask, SIGCHLD);
-    // sigaddset(&act.sa_mask, SIGCONT);
-    // // sigaddset(&act.sa_mask, SIGSTOP);
-    // sigaddset(&act.sa_mask, SIGTSTP);
-    // sigaddset(&act.sa_mask, SIGTTIN);
-    // sigaddset(&act.sa_mask, SIGTTOU);
-    // sigaddset(&act.sa_mask, SIGURG);
-    // sigaddset(&act.sa_mask, SIGXCPU);
-    // sigaddset(&act.sa_mask, SIGXFSZ);
-    // sigaddset(&act.sa_mask, SIGVTALRM);
-    // sigaddset(&act.sa_mask, SIGPROF);
-    // sigaddset(&act.sa_mask, SIGWINCH);
-    // // sigaddset(&act.sa_mask, SIGIO);
-    // // sigaddset(&act.sa_mask, SIGPWR);
-    // sigaddset(&act.sa_mask, SIGSYS);
-    // act.sa_flags = SA_RESTART|SA_NODEFER|SA_RESETHAND;
+    sigaction(SIGQUIT, &act, NULL);
+    printf("input Ctrl+\\\n");
+    pause();
+
+    sigaction(SIGALRM, &act, NULL);
+    printf("alarm\n");
+    alarm(1);
+    pause();
+
+    sigaction(SIGTERM, &act, NULL);
+    printf("input kill %d ! kill default send this signal\n", getpid());
+    pause();
+
+    sigaction(SIGCHLD, &act, NULL);
+    printf("child stopped or terminated\n");
+    pid_t pid = fork();
+    if(-1 == pid)
+    {
+        perror("fork err");
+        return -1;
+    }
+    else if(0 == pid)
+    {
+        sleep(3);
+        exit(0);
+    }
+
+    pause();
+
+    sigaction(SIGTSTP, &act, NULL);
+    printf("input Ctrl+Z\n");
+    pause();
+    
+    sigaction(SIGABRT, &act, NULL);
+    printf("abort()\n");
+    abort();
 
     while(true)
     {
