@@ -1,3 +1,5 @@
 env = Environment()
 env.Program('pipe_demo', 'pipedemo.cpp')
 env.Program('popen_demo', 'popendemo.cpp')
+env.Program('fifo_rd_demo', 'fiforddemo.cpp')
+env.Program('fifo_wr_demo', 'fifowrdemo.cpp')
