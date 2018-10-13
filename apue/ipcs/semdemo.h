@@ -13,6 +13,7 @@
 #ifndef __SEMDEMO_H__
 #define __SEMDEMO_H__
 
+//如果传key则优先使用key，否则使用pathname生成，pathname默认为当前目录"."
 int sem_create(int nsems, key_t key = 0, const char* pathname = ".");
 int sem_get(key_t key = 0, const char* pathname = ".");
 int sem_destroy(int semid);
