@@ -1,117 +1,97 @@
 /*============================================================================
 * Copyright (C) 2018 Ltd. All rights reserved.
 * Author  : SteveNo10
-* Time    : 2018-10-12
+* Time    : 2018-10-13
 * Descript: 
 *
 ============================================================================*/
 
-#include <iostream>
-#include <string>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include "semdemo.h"
+#include <stdio.h>
 
-using namespace std;
+int sem_comm(int nsems, int semflag, key_t key, const char* pathname)
+{
+    if(0 == key)
+    {
+        key = ftok(pathname, 0);
+        if(-1 == key)
+        {
+            perror("ftok err");
+            return -1;
+        }
+    }
 
-const key_t KEY_VALUE = 2;
+    int semid = semget(key, nsems, semflag);
+    if(-1 == semid)
+    {
+        perror("semget err");
+    }
+
+    return semid;
+}
+
+int sem_create(int nsems, key_t key, const char* pathname)
+{
+    return sem_comm(nsems, IPC_CREAT|IPC_EXCL|0666, key, pathname);
+}
+
+int sem_get(key_t key, const char* pathname)
+{
+    return sem_comm(0, IPC_CREAT, key, pathname);
+}
+
+int sem_destroy(int semid)
+{
+    int ret = semctl(semid, 0, IPC_RMID, NULL);
+    if(-1 == ret)
+    {
+        perror("semctl err");
+    }
+
+    return ret;
+}
 
 union semun
 {
-    int val;    // Value for SETVAL
-    struct semid_ds *buf;    // Buffer for IPC_STAT, IPC_SET
-    unsigned short *array;  // Array for GETALL, SETALL
-    struct seminfo *__buf;  // Buffer for IPC_INFO(Linux-specific)
+    int val;
+    struct semid_ds* buf;
+    unsigned short* array;
+    struct seminfo* __buf;
 };
 
-void CheckRetVal(int retval, const string & strErr)
-{
-    if(-1 == retval)
-    {
-        cout<<strErr<<endl;
-        exit(-1);
-    }
-}
-
-int sem_setval(int semid, int val)
+int sem_init(int semid, int semnum, int val)
 {
     union semun seminfo;
     seminfo.val = val;
-    return semctl(semid, 0, SETVAL, seminfo);
+
+    int ret = semctl(semid, semnum, SETVAL, seminfo);
+    if(-1 == ret)
+    {
+        perror("semctl err");
+    }
+
+    return ret;
 }
 
-int sem_p(int semid)
+int sem_op_comm(int semid, unsigned short sem_num, short sem_op)
 {
-    struct sembuf sembufinfo;
-    sembufinfo.sem_num = 0;
-    sembufinfo.sem_op = -1;
-    sembufinfo.sem_flg = SEM_UNDO;
-
-    return semop(semid, &sembufinfo, 1);
+    struct sembuf sem = {sem_num, sem_op, 0};
+    int ret = semop(semid, &sem, 1);
+    if(-1 == ret)
+    {
+        perror("semop err");
+    }
+    
+    return ret;
 }
 
-int sem_v(int semid)
+int sem_p(int semid, int sem_num)
 {
-    struct sembuf sembufinfo = {0, 1, SEM_UNDO};
-    return semop(semid, &sembufinfo, 1);
+    return sem_op_comm(semid, sem_num, -1);
 }
 
-int main(int argc, char *argv[])
+int sem_v(int semid, int sem_num)
 {
-    if(argc != 2)
-    {
-        cout<<"Usage:"<<argv[0]<<" msg! You must say something!"<<endl;
-        return -1;
-    }
-
-    string strMsg = argv[1];
-
-    bool bWrite = (strMsg == "start");
-
-    int semid = semget(KEY_VALUE, 1, IPC_CREAT|0666);
-    CheckRetVal(semid, "semget err");
-
-    if(bWrite)
-    {
-        int ret = sem_setval(semid, 1);
-        CheckRetVal(ret, "sem setval err!");
-    }
-
-    struct semid_ds seminfo;
-    int ret = semctl(semid, 0, IPC_STAT, &seminfo);
-    CheckRetVal(ret, "semctl err");
-
-    cout<<"sem info: uid:"<<seminfo.sem_perm.uid<<"   num:"<<seminfo.sem_nsems<<endl;
-
-    if(bWrite)
-    {
-        while(true)
-        {
-            ret = sem_p(semid);
-            CheckRetVal(ret, "sem_p err!");
-
-            cout<<strMsg<<endl;
-
-            ret = sem_v(semid);
-            CheckRetVal(ret, "sem_v err!");
-        }
-    }
-    else
-    {
-        while(true)
-        {
-            ret = sem_p(semid);
-            CheckRetVal(ret, "sem_p err!");
-
-            sleep(1);
-            cout<<"wait 1s"<<endl;
-
-            ret = sem_v(semid);
-            CheckRetVal(ret, "sem_v err!");
-        }
-    }
-
-    return 0;
+    return sem_op_comm(semid, sem_num, 1);
 }
+
