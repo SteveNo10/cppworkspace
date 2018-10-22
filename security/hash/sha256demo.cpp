@@ -16,12 +16,14 @@ using namespace std;
 
 // const int pwds_len = 11;
 // const char pwds[pwds_len] = {'\0', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
-const int pwds_len = 63;
-const char pwds[63] = {'\0', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+const int pwds_len = 81;
+const char pwds[pwds_len] = {'\0', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
     'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
+    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '_',
+    '=', ',', '?', '[', ']'};
 
 // #define LOOPHEAD(i) for(buf[i] = BEGIN; buf[i] <= END; ++buf[i]) {
 #define LOOPHEAD(i) for(int idx_##i = 0; idx_##i <= pwds_len; ++idx_##i) { buf[i] = pwds[idx_##i];
@@ -44,8 +46,12 @@ int main(int argc, char* argv[])
     string strKey = "GM_WLCARD_1336";
 
     bool bFound = false;
-    char buf[7] = {0};
-    LOOPHEAD(5);
+    char buf[11] = {0};
+    LOOPHEAD(9);
+    LOOPMID(8);
+    LOOPMID(7);
+    LOOPMID(6);
+    LOOPMID(5);
     LOOPMID(4);
     LOOPMID(3);
     LOOPMID(2);
@@ -72,7 +78,10 @@ int main(int argc, char* argv[])
     ENDLOOP(3);
     ENDLOOP(4);
     ENDLOOP(5);
-
+    ENDLOOP(6);
+    ENDLOOP(7);
+    ENDLOOP(8);
+    ENDLOOP(9);
 
 result:
     if(!bFound)
