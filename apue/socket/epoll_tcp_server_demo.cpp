@@ -25,8 +25,11 @@ int main(int, char**)
 {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
 
+    //一般来说，一个端口释放后会等待两分钟之后才能再被使用，SO_REUSEADDR是让端口释放后立即就可以被再次使用
     int val = 1;
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*)&val, sizeof(val));
+
+    set_nonblock(sock);
 
     struct sockaddr_in addr_bind;
     bzero(&addr_bind, sizeof(addr_bind));
@@ -72,6 +75,7 @@ int main(int, char**)
                     if(sock == events[i].data.fd)
                     {
                         int newfd = accept(sock, (sockaddr*)&addr_cli, &addrlen_cli);
+                        set_nonblock(newfd);
                         bzero(&ee, sizeof(ee));
                         ee.events = EPOLLIN|EPOLLET;
                         ee.data.fd = newfd;
