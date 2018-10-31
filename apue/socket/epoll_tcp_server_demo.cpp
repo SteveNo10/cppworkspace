@@ -24,9 +24,24 @@ const int MAX_CON = 1024;
 int main(int, char**)
 {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if(-1 == sock)
+    {
+        perror("socket err!");
+        return -1;
+    }
 
     int val = 1;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*)&val, sizeof(val));
+    if(-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*)&val, sizeof(val)))
+    {
+        perror("setsockopt SO_REUSEADDR err!");
+        return -1;
+    }
+
+    if(-1 == set_nonblock(sock))
+    {
+        perror("set nonblock err!");
+        return -1;
+    }
 
     struct sockaddr_in addr_bind;
     bzero(&addr_bind, sizeof(addr_bind));
@@ -36,14 +51,28 @@ int main(int, char**)
 
     bind(sock, (struct sockaddr*)&addr_bind, sizeof(addr_bind));
 
-    listen(sock, MAX_CON);
+    if(-1 == listen(sock, MAX_CON))
+    {
+        perror("listen err!");
+        return -1;
+    }
 
     int efd = epoll_create(MAX_CON);
+    if(-1 == efd)
+    {
+        perror("epoll_create err!");
+        return -1;
+    }
+
     struct epoll_event ee;
     bzero(&ee, sizeof(ee));
     ee.events = EPOLLIN;
     ee.data.fd = sock;
-    epoll_ctl(efd, EPOLL_CTL_ADD, sock, &ee);
+    if(-1 == epoll_ctl(efd, EPOLL_CTL_ADD, sock, &ee))
+    {
+        perror("epoll_ctl err!");
+        return -1;
+    }
 
     struct sockaddr_in addr_cli;
     socklen_t addrlen_cli = sizeof(struct sockaddr_in);
@@ -55,8 +84,15 @@ int main(int, char**)
         int e_num = epoll_wait(efd, events, MAX_CON, 3000);
         if(-1 == e_num)
         {
-            perror("epoll_wait err!");
-            return -1;
+            if(EINTR == errno)
+            {
+                continue;
+            }
+            else
+            {
+                perror("epoll_wait err!");
+                return -1;
+            }
         }
         else if(0 == e_num)
         {
@@ -67,15 +103,49 @@ int main(int, char**)
         {
             for(int i = 0; i < e_num; ++i)
             {
-                if(EPOLLIN == events[i].events)
+                if(EPOLLIN & events[i].events)
                 {
                     if(sock == events[i].data.fd)
                     {
-                        int newfd = accept(sock, (sockaddr*)&addr_cli, &addrlen_cli);
-                        bzero(&ee, sizeof(ee));
-                        ee.events = EPOLLIN|EPOLLET;
-                        ee.data.fd = newfd;
-                        epoll_ctl(efd, EPOLL_CTL_ADD, newfd, &ee);
+                        int newfd = -1; 
+                        int accept_num = 10;   //单次最多接受10个连接，防止连接过多阻塞别的消息
+                        while(accept_num-- > 0)
+                        {
+                            newfd = accept(sock, (sockaddr*)&addr_cli, &addrlen_cli);
+                            if(-1 == newfd)
+                            {
+                                if(EAGAIN == errno)
+                                {
+                                    break;
+                                }
+                                else if(EINTR == errno)
+                                {
+                                    continue;
+                                }
+                                else
+                                {
+                                    perror("accept err!");
+                                    break;
+                                }
+                            }
+
+                            if(-1 == set_nonblock(newfd))
+                            {
+                                perror("set nonblock err!");
+                                close(newfd);
+                                continue;
+                            }
+
+                            bzero(&ee, sizeof(ee));
+                            ee.events = EPOLLIN|EPOLLET;
+                            ee.data.fd = newfd;
+                            if(-1 == epoll_ctl(efd, EPOLL_CTL_ADD, newfd, &ee))
+                            {
+                                perror("epoll_ctl err!");
+                                close(newfd);
+                                continue;
+                            }
+                        }
                     }
                     else
                     {
@@ -87,21 +157,35 @@ int main(int, char**)
                             printf("client %d close connection\n", events[i].data.fd);
                             close(events[i].data.fd);
                         }
+                        else if(-1 == rsize)
+                        {
+                            perror("read err!");
+                            epoll_ctl(efd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
+                            close(events[i].data.fd);
+                        }
                         else
                         {
                             printf("read from %d msg %s len:%d\n", events[i].data.fd, buf, rsize);
+                            //TODO 非阻塞模式write可能失败，正式代码需要缓存起来重发
                             write(events[i].data.fd, buf, rsize);
                         }
                     }
                 }
-                else if(EPOLLHUP == events[i].events)
+                else if(EPOLLHUP & events[i].events || EPOLLERR & events[i].events)
                 {
                     epoll_ctl(efd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
                     printf("close fd:%d\n", events[i].data.fd);
+                    close(events[i].data.fd);
+                }
+                else
+                {
+                    epoll_ctl(efd, EPOLL_CTL_DEL, events[i].data.fd, NULL);
+                    printf("%d err event:%u\n", events[i].data.fd, events[i].events);
                     close(events[i].data.fd);
                 }
             }
         }
     }
 
+    return 0;
 }

@@ -1,3 +1,6 @@
 env = Environment()
 env.Append(CPPFLAGS = ['-g', '-Wall', '-std=c++0x'])
 env.Program('epoll_tcp_server_demo', 'epoll_tcp_server_demo.cpp')
+env.Program('epoll_udp_server_demo', 'epoll_udp_server_demo.cpp')
+env.Program('tcp_client_demo', 'tcp_client_demo.cpp')
+env.Program('udp_client_demo', 'udp_client_demo.cpp')
