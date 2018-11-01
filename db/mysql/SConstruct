@@ -1,0 +1,9 @@
+env = Environment()
+env.Append(CPPFLAGS = ['-g', '-Wall', '-std=c++0x'])
+env.Append(LIBPATH = ['/usr/local/lib',
+                      '/usr/local/lib64',
+                      '/usr/lib',
+                      '/usr/lib64',
+                      '/usr/local/component/lib/mysql'])
+env.Append(LIBS = ['mysqlclient'])
+env.Program('mysql_demo', 'mysqldemo.cpp')
