@@ -30,6 +30,7 @@ int main(int, char**)
         return -1;
     }
 
+    //一般来说，一个端口释放后会等待两分钟之后才能再被使用，SO_REUSEADDR是让端口释放后立即就可以被再次使用
     int val = 1;
     if(-1 == setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*)&val, sizeof(val)))
     {
@@ -42,6 +43,8 @@ int main(int, char**)
         perror("set nonblock err!");
         return -1;
     }
+
+    set_nonblock(sock);
 
     struct sockaddr_in addr_bind;
     bzero(&addr_bind, sizeof(addr_bind));
