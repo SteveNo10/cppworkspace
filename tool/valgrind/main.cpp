@@ -6,10 +6,16 @@
 *
 ============================================================================*/
 
+#include <unistd.h>
+
 int main(int, char**)
 {
-    int* p = new int(10);
-    *p = 20;
+    while(true)
+    {
+        int* p = new int(10);
+        *p = 20;
+        usleep(1000);
+    }
 
     return 0;
 }
