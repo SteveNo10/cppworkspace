@@ -14,6 +14,11 @@ using namespace std;
 
 void replace_blank(const char* ori)
 {
+    if(NULL == ori)
+    {
+        return;
+    }
+
     int len = 0;
     int blank_num = 0;
     int i = 0;

@@ -64,12 +64,23 @@ MyString::MyString(const MyString& oStr)
 
 MyString& MyString::operator=(const MyString& oStr)
 {
+    /*
     if(&oStr != this)
     {
         MyString tmp(oStr);
         char* pTmp = m_pData;
         m_pData = tmp.m_pData;
         tmp.m_pData = pTmp;
+    }
+    */
+
+    if(&oStr != this)
+    {
+        delete[] m_pData;
+        m_pData = NULL;
+
+        m_pData = new char[strlen(oStr.m_pData) + 1];
+        strcpy(m_pData, oStr.m_pData);
     }
 
     return *this;
