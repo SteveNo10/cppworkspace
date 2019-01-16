@@ -7,6 +7,7 @@
 ============================================================================*/
 
 #include <iostream>
+#include <stack>
 
 using namespace std;
 
@@ -37,6 +38,7 @@ public:
 
     void Print();
     void PrintReverse();
+    void PrintReverseByStack();
 
 private:
     void PrintReverse(ListNode* pNode);
@@ -91,24 +93,20 @@ void List::PushBack(int val)
 
 void List::Print()
 {
-    if(m_pHead == NULL)
-    {
-        return;
-    }
-
     ListNode* pTmp = m_pHead;
-    while(pTmp->m_pNext != NULL)
+    while(pTmp != NULL)
     {
-        cout<<pTmp->m_val<<"->";
+        cout<<pTmp->m_val<<" ";
         pTmp = pTmp->m_pNext;
     }
 
-    cout<<pTmp->m_val<<endl;
+    cout<<endl;
 }
 
 void List::PrintReverse()
 {
     PrintReverse(m_pHead);
+    cout<<endl;
 }
 
 void List::PrintReverse(ListNode* pNode)
@@ -123,14 +121,26 @@ void List::PrintReverse(ListNode* pNode)
         PrintReverse(pNode->m_pNext);
     }
 
-    if(pNode == m_pHead)
+    cout<<pNode->m_val<<" ";
+}
+
+void List::PrintReverseByStack()
+{
+    stack<int> nodes;
+    ListNode* pTmp = m_pHead;
+    while(pTmp != NULL)
     {
-        cout<<pNode->m_val<<endl;
+        nodes.push(pTmp->m_val);
+        pTmp = pTmp->m_pNext;
     }
-    else
+
+    while(!nodes.empty())
     {
-        cout<<pNode->m_val<<"->";
+        cout<<nodes.top()<<" ";
+        nodes.pop();
     }
+
+    cout<<endl;
 }
 
 int main(int, char**)
@@ -144,6 +154,8 @@ int main(int, char**)
     li.Print();
 
     li.PrintReverse();
+
+    li.PrintReverseByStack();
 
     return 0;
 }
