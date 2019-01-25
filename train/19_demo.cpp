@@ -63,50 +63,16 @@ void PrintTreePreOut(BinaryTreeNode* pHead)
     cout<<endl;
 }
 
-bool IsEqual(BinaryTreeNode* pOri, BinaryTreeNode* pDst)
+void Mirror(BinaryTreeNode* pHead)
 {
-    if(pDst == NULL)
+    if(pHead != NULL)
     {
-        return true;
+        BinaryTreeNode* pTmp = pHead->m_pLeft;
+        pHead->m_pLeft = pHead->m_pRight;
+        pHead->m_pRight = pTmp;
+        Mirror(pHead->m_pLeft);
+        Mirror(pHead->m_pRight);
     }
-
-    if(pOri != NULL)
-    {
-        if(pOri->m_nVal == pDst->m_nVal)
-        {
-            if(IsEqual(pOri->m_pLeft, pDst->m_pLeft) && IsEqual(pOri->m_pRight, pDst->m_pRight))
-            {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-bool IsContains(BinaryTreeNode* pOri, BinaryTreeNode* pDst)
-{
-    bool bContains = false;
-
-    if(pOri != NULL && pDst != NULL)
-    {
-        if(pOri->m_nVal == pDst->m_nVal)
-        {
-            bContains = IsEqual(pOri, pDst);
-        }
-
-        if(!bContains)
-        {
-            bContains = IsContains(pOri->m_pLeft, pDst);
-        }
-
-        if(!bContains)
-        {
-            bContains = IsContains(pOri->m_pRight, pDst);
-        }
-    }
-
-    return bContains;
 }
 
 int main(int, char**)
@@ -115,19 +81,8 @@ int main(int, char**)
     BinaryTreeNode* pOri = CreateTree(0, arr, 10);
     PrintTreePreOut(pOri);
 
-    // int arrDst[4] = {4, 1, 2, 3};
-    int arrDst[5] = {4, 1, 2, 3, 9};
-    BinaryTreeNode* pDst = CreateTree(0, arrDst, 5);
-    PrintTreePreOut(pDst);
-
-    if(IsContains(pOri, pDst))
-    {
-        cout<<"yes"<<endl;
-    }
-    else
-    {
-        cout<<"no"<<endl;
-    }
+    Mirror(pOri);
+    PrintTreePreOut(pOri);
 
     return 0;
 }
